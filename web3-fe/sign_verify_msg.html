@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sign and verify messages with Web3 wallet</title>
+        <style>
+            /* Style for the read-only output textarea */
+            .output {
+              background-color: #f7f7f7;
+            }
+          </style>
+        <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+        <script>
+        async function signMessage() {
+            // Get the user's message from the input field
+            const message = document.getElementById('message').value;
+            
+            // Get the user's Ethereum wallet
+            const web3 = new Web3(window.ethereum);
+            const accounts = await web3.eth.requestAccounts();
+            const wallet = accounts[0];
+            
+            // Sign the message using the user's wallet
+            const signature = await web3.eth.personal.sign(message, wallet);
+            
+            // Convert the signature to base64
+            const base64Signature = btoa(signature);
+            
+            // Display the base64 signature in the output field
+            const output = document.getElementById('output');
+            output.value = base64Signature;
+        }
+        
+        function verifySignature() {
+            // Clear the verification result
+            const output = document.getElementById('verify-output');
+            output.value = '';
+
+            // Get the user's message, public key, and signature from the input fields
+            const message = document.getElementById('verify-message').value;
+            const publicKey = document.getElementById('public-key').value;
+            const signature = document.getElementById('signature').value;
+            
+            try {
+            // Decode the signature from base64
+            const decodedSignature = atob(signature);
+            
+            // Verify the signature using the public key and message
+            const web3 = new Web3();
+            const recoveredAddress = web3.eth.accounts.recover(message, decodedSignature);
+            
+            // Check if the recovered address matches the public key
+            const verification = (recoveredAddress.toLowerCase() === publicKey.toLowerCase());
+            
+            // Display the verification result in the output field
+            output.value = (verification ? 'Signature is valid.' : 'Signature is invalid.');
+            } catch (error) {
+            // Display the error message in the output field
+            output.value = `Error: ${error.message}`;
+            }
+        }
+        </script>
+    </head>
+    <body>
+        <h1>Sign and verify messages with Web3 wallet</h1>
+        <div>
+            <h2>Sign a message</h2>
+            <form>
+            <label for="message">Message:</label><br><br>
+            <textarea id="message" name="message" rows="5" cols="50"></textarea><br><br>
+            <button type="button" onclick="signMessage()">Sign message</button><br><br>
+            <label for="output">Signature (base64 encoded):</label><br><br>
+            <textarea id="output" class="output" name="output" rows="5" cols="50" readonly></textarea><br><br>
+            </form>
+        </div>
+        <div>
+            <h2>Verify a message</h2>
+            <form>
+                <label for="verify-message">Message:</label><br><br>
+                <textarea id="verify-message" name="verify-message" rows="5" cols="50"></textarea><br><br>
+                <label for="public-key">Enter the public key:</label>
+                <input type="text" id="public-key" name="public-key"><br><br>
+                <label for="signature">Enter the signature (base64 encoded):</label><br><br>
+                <textarea id="signature" name="signature" rows="5" cols="50"></textarea><br><br>
+                <button type="button" onclick="verifySignature()">Verify signature</button><br><br>
+                <label for="verify-output">Verification result:</label><br><br>
+                <textarea id="verify-output" class="output" name="verify-output" rows="5" cols="50" readonly></textarea>
+            </form>
+        </div>
+    </body>
+</html>
+
